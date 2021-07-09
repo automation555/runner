@@ -26,7 +26,7 @@ namespace GitHub.Runner.Worker.Handlers
             // We don't want to display the internal workings if composite (similar/equivalent information can be found in debug)
             void writeDetails(string message)
             {
-                if (ExecutionContext.IsEmbedded)
+                if (ExecutionContext.InsideComposite)
                 {
                     ExecutionContext.Debug(message);
                 }
@@ -52,7 +52,7 @@ namespace GitHub.Runner.Worker.Handlers
                     firstLine = firstLine.Substring(0, firstNewLine);
                 }
 
-                writeDetails(ExecutionContext.IsEmbedded ? $"Run {firstLine}" : $"##[group]Run {firstLine}");
+                writeDetails(ExecutionContext.InsideComposite ? $"Run {firstLine}" : $"##[group]Run {firstLine}");
             }
             else
             {
@@ -138,7 +138,7 @@ namespace GitHub.Runner.Worker.Handlers
                 }
             }
 
-            writeDetails(ExecutionContext.IsEmbedded ? "" : "##[endgroup]");
+            writeDetails(ExecutionContext.InsideComposite ? "" : "##[endgroup]");
         }
 
         public async Task RunAsync(ActionRunStage stage)
@@ -191,6 +191,7 @@ namespace GitHub.Runner.Worker.Handlers
 
             string prependPath = string.Join(Path.PathSeparator.ToString(), ExecutionContext.Global.PrependPath.Reverse<string>());
             string commandPath, argFormat, shellCommand;
+            bool emptyArgFormat;
             // Set up default command and arguments
             if (string.IsNullOrEmpty(shell))
             {
@@ -209,6 +210,7 @@ namespace GitHub.Runner.Worker.Handlers
                 commandPath = WhichUtil.Which("bash", false, Trace, prependPath) ?? WhichUtil.Which("sh", true, Trace, prependPath);
 #endif
                 argFormat = ScriptHandlerHelpers.GetScriptArgumentsFormat(shellCommand);
+                emptyArgFormat = true;
             }
             else
             {
@@ -219,7 +221,12 @@ namespace GitHub.Runner.Worker.Handlers
                 argFormat = $"{parsed.shellArgs}".TrimStart();
                 if (string.IsNullOrEmpty(argFormat))
                 {
+                    emptyArgFormat = true;
                     argFormat = ScriptHandlerHelpers.GetScriptArgumentsFormat(shellCommand);
+                }
+                else
+                {
+                    emptyArgFormat = false;
                 }
             }
 
@@ -237,7 +244,9 @@ namespace GitHub.Runner.Worker.Handlers
             var arguments = string.Format(argFormat, resolvedScriptPath);
 
             // Fix up and write the script
-            contents = ScriptHandlerHelpers.FixUpScriptContents(shellCommand, contents);
+            if (!emptyArgFormat) {
+                contents = ScriptHandlerHelpers.FixUpScriptContents(shellCommand, contents);
+            }
 #if OS_WINDOWS
             // Normalize Windows line endings
             contents = contents.Replace("\r\n", "\n").Replace("\n", "\r\n");
