@@ -165,7 +165,7 @@ namespace GitHub.Runner.Listener.Configuration
             List<TaskAgentPool> agentPools = await _runnerServer.GetAgentPoolsAsync();
             TaskAgentPool defaultPool = agentPools?.Where(x => x.IsInternal).FirstOrDefault();
 
-            if (agentPools?.Where(x => !x.IsHosted).Count() > 0)
+            if (agentPools?.Where(x => !x.IsHosted).Count() > 1)
             {
                 poolName = command.GetRunnerGroupName(defaultPool?.Name);
                 _term.WriteLine();
@@ -351,7 +351,7 @@ namespace GitHub.Runner.Listener.Configuration
                     throw new Exception("Unconfigure service first");
 #elif OS_OSX
                     // unconfig osx service first
-                    throw new Exception("Unconfigure service first");
+                    throw new Exception("Uninstall service first");
 #endif
                 }
 
