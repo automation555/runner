@@ -1,5 +1,6 @@
 using GitHub.DistributedTask.WebApi;
 using GitHub.Runner.Listener.Configuration;
+using GitHub.Runner.Common.Util;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,8 +11,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using GitHub.Runner.Common;
 using GitHub.Runner.Sdk;
-using System.Linq;
-using GitHub.Runner.Listener.Check;
 
 namespace GitHub.Runner.Listener
 {
@@ -70,46 +69,6 @@ namespace GitHub.Runner.Listener
                 if (command.Commit)
                 {
                     _term.WriteLine(BuildConstants.Source.CommitHash);
-                    return Constants.Runner.ReturnCode.Success;
-                }
-
-                if (command.Check)
-                {
-                    var url = command.GetUrl();
-                    var pat = command.GetGitHubPersonalAccessToken(required: true);
-                    var checkExtensions = HostContext.GetService<IExtensionManager>().GetExtensions<ICheckExtension>();
-                    var sortedChecks = checkExtensions.OrderBy(x => x.Order);
-                    foreach (var check in sortedChecks)
-                    {
-                        _term.WriteLine($"**********************************************************************************************************************");
-                        _term.WriteLine($"**  Check:               {check.CheckName}");
-                        _term.WriteLine($"**  Description:         {check.CheckDescription}");
-                        _term.WriteLine($"**********************************************************************************************************************");
-                        var result = await check.RunCheck(url, pat);
-                        if (!result)
-                        {
-                            _term.WriteLine($"**                                                                                                                  **");
-                            _term.WriteLine($"**                                            F A I L                                                               **");
-                            _term.WriteLine($"**                                                                                                                  **");
-                            _term.WriteLine($"**********************************************************************************************************************");
-                            _term.WriteLine($"** Log: {check.CheckLog}");
-                            _term.WriteLine($"** Help Doc: {check.HelpLink}");
-                            _term.WriteLine($"**********************************************************************************************************************");
-                        }
-                        else
-                        {
-                            _term.WriteLine($"**                                                                                                                  **");
-                            _term.WriteLine($"**                                            P A S S                                                               **");
-                            _term.WriteLine($"**                                                                                                                  **");
-                            _term.WriteLine($"**********************************************************************************************************************");
-                            _term.WriteLine($"** Log: {check.CheckLog}");
-                            _term.WriteLine($"**********************************************************************************************************************");
-                        }
-
-                        _term.WriteLine();
-                        _term.WriteLine();
-                    }
-
                     return Constants.Runner.ReturnCode.Success;
                 }
 
@@ -234,7 +193,7 @@ namespace GitHub.Runner.Listener
                     HostContext.StartupType = startType;
 
                     // Run the runner interactively or as service
-                    return await RunAsync(settings, command.RunOnce);
+                    return await RunAsync(settings, command.RunOnce || settings.Ephemeral);  // TODO: Remove RunOnce later.
                 }
                 else
                 {
@@ -501,7 +460,6 @@ Options:
  --help     Prints the help for each command
  --version  Prints the runner version
  --commit   Prints the runner commit
- --check    Check the runner's network connectivity with GitHub server
 
 Config Options:
  --unattended           Disable interactive prompts for missing arguments. Defaults will be used for missing options
@@ -512,7 +470,7 @@ Config Options:
  --labels string        Extra labels in addition to the default: 'self-hosted,{Constants.Runner.Platform},{Constants.Runner.PlatformArchitecture}'
  --work string          Relative runner work directory (default {Constants.Path.WorkDirectory})
  --replace              Replace any existing runner with the same name (default false)
- --pat                  GitHub personal access token used for checking network connectivity when executing `.{separator}run.{ext} --check`");
+ --ephemeral            Configure the runner only take one job and let service un-configured the runner after the job finish (default false)");
 #if OS_WINDOWS
     _term.WriteLine($@" --runasservice   Run the runner as a service");
     _term.WriteLine($@" --windowslogonaccount string   Account to run the service as. Requires runasservice");
@@ -520,8 +478,6 @@ Config Options:
 #endif
     _term.WriteLine($@"
 Examples:
- Check GitHub server network connectivity:
-  .{separator}run.{ext} --check --url <url> --pat <pat>
  Configure a runner non-interactively:
   .{separator}config.{ext} --unattended --url <url> --token <token>
  Configure a runner non-interactively, replacing any existing runner with the same name:

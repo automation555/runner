@@ -27,12 +27,11 @@ namespace GitHub.Runner.Listener
 
         private readonly string[] validFlags =
         {
-            Constants.Runner.CommandLine.Flags.Check,
             Constants.Runner.CommandLine.Flags.Commit,
+            Constants.Runner.CommandLine.Flags.Ephemeral,
             Constants.Runner.CommandLine.Flags.Help,
             Constants.Runner.CommandLine.Flags.Replace,
             Constants.Runner.CommandLine.Flags.RunAsService,
-            Constants.Runner.CommandLine.Flags.Once,
             Constants.Runner.CommandLine.Flags.Unattended,
             Constants.Runner.CommandLine.Flags.Version
         };
@@ -43,7 +42,6 @@ namespace GitHub.Runner.Listener
             Constants.Runner.CommandLine.Args.Labels,
             Constants.Runner.CommandLine.Args.MonitorSocketAddress,
             Constants.Runner.CommandLine.Args.Name,
-            Constants.Runner.CommandLine.Args.PAT,
             Constants.Runner.CommandLine.Args.RunnerGroup,
             Constants.Runner.CommandLine.Args.StartupType,
             Constants.Runner.CommandLine.Args.Token,
@@ -61,12 +59,13 @@ namespace GitHub.Runner.Listener
         public bool Warmup => TestCommand(Constants.Runner.CommandLine.Commands.Warmup);
 
         // Flags.
-        public bool Check => TestFlag(Constants.Runner.CommandLine.Flags.Check);
         public bool Commit => TestFlag(Constants.Runner.CommandLine.Flags.Commit);
         public bool Help => TestFlag(Constants.Runner.CommandLine.Flags.Help);
         public bool Unattended => TestFlag(Constants.Runner.CommandLine.Flags.Unattended);
         public bool Version => TestFlag(Constants.Runner.CommandLine.Flags.Version);
+        public bool Ephemeral => TestFlag(Constants.Runner.CommandLine.Flags.Ephemeral);
 
+        // TODO: Remove in 10/2020
         public bool RunOnce => TestFlag(Constants.Runner.CommandLine.Flags.Once);
 
         // Constructor.
@@ -188,22 +187,6 @@ namespace GitHub.Runner.Listener
                 description: "What is your pool admin oauth access token?",
                 defaultValue: string.Empty,
                 validator: Validators.NonEmptyValidator);
-        }
-
-        public string GetGitHubPersonalAccessToken(bool required = false)
-        {
-            if (required)
-            {
-                return GetArgOrPrompt(
-                    name: Constants.Runner.CommandLine.Args.PAT,
-                    description: "What is your GitHub personal access token?",
-                    defaultValue: string.Empty,
-                    validator: Validators.NonEmptyValidator);
-            }
-            else
-            {
-                return GetArg(name: Constants.Runner.CommandLine.Args.PAT);
-            }
         }
 
         public string GetRunnerRegisterToken()
