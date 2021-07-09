@@ -41,8 +41,6 @@ namespace GitHub.Runner.Common
         public static string PluginTracePrefix = "##[plugin.trace]";
         public static readonly int RunnerDownloadRetryMaxAttempts = 3;
 
-        public static readonly int CompositeActionsMaxDepth = 9;
-
         // This enum is embedded within the Constants class to make it easier to reference and avoid
         // ambiguous type reference with System.Runtime.InteropServices.OSPlatform and System.Runtime.InteropServices.Architecture
         public enum OSPlatform
@@ -98,6 +96,7 @@ namespace GitHub.Runner.Common
                     public static readonly string UserName = "username";
                     public static readonly string WindowsLogonAccount = "windowslogonaccount";
                     public static readonly string Work = "work";
+                    public static readonly string WorkerBinary = "workerbinary";
 
                     // Secret args. Must be added to the "Secrets" getter as well.
                     public static readonly string Token = "token";
