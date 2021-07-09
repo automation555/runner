@@ -53,7 +53,7 @@ namespace GitHub.Runner.Listener.Configuration
             Trace.Info(nameof(LoadSettings));
             if (!IsConfigured())
             {
-                throw new InvalidOperationException("Not configured. Run config.(sh/cmd) to configure the runner.");
+                throw new InvalidOperationException("Not configured");
             }
 
             RunnerSettings settings = _store.GetSettings();
@@ -165,7 +165,7 @@ namespace GitHub.Runner.Listener.Configuration
             List<TaskAgentPool> agentPools = await _runnerServer.GetAgentPoolsAsync();
             TaskAgentPool defaultPool = agentPools?.Where(x => x.IsInternal).FirstOrDefault();
 
-            if (agentPools?.Where(x => !x.IsHosted).Count() > 0)
+            if (agentPools?.Where(x => !x.IsHosted).Count() > 1)
             {
                 poolName = command.GetRunnerGroupName(defaultPool?.Name);
                 _term.WriteLine();
@@ -303,6 +303,8 @@ namespace GitHub.Runner.Listener.Configuration
             runnerSettings.WorkFolder = command.GetWork();
 
             runnerSettings.MonitorSocketAddress = command.GetMonitorSocketAddress();
+
+            runnerSettings.WorkerBinary = command.GetWorkerBinary();
 
             _store.SaveSettings(runnerSettings);
 
