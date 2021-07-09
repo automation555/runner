@@ -28,13 +28,13 @@ date "+[%F %T-%4N] Waiting for $runnerprocessname ($runnerpid) to complete" >> "
 while [ -e /proc/$runnerpid ]
 do
     date "+[%F %T-%4N] Process $runnerpid still running" >> "$logfile" 2>&1
-    sleep 2
+    ping -c 2 127.0.0.1 >nul
 done
 date "+[%F %T-%4N] Process $runnerpid finished running" >> "$logfile" 2>&1
 
 # start re-organize folders
 date "+[%F %T-%4N] Sleep 1 more second to make sure process exited" >> "$logfile" 2>&1
-sleep 1
+ping -c 2 127.0.0.1 >nul
 
 # the folder structure under runner root will be
 # ./bin -> bin.2.100.0 (junction folder)
@@ -124,6 +124,17 @@ date "+[%F %T-%4N] Update succeed" >> "$logfile"
 # runner service host can base on the log file name determin the result of the runner update
 date "+[%F %T-%4N] Rename $logfile to be $logfile.succeed" >> "$logfile" 2>&1
 mv -fv "$logfile" "$logfile.succeed" >> "$logfile" 2>&1
+
+# reinstall service if needed, only on Darwin (update launchd template). It cannot be extended to Linux because systemd
+# requires sudo priviledges we cannot provide on update (non-interactive context). Reinstall is mandatory on macOS, to
+# avoid any issues between pre-update node.js interpreter and syspolicyd.
+# For more details, please check : https://github.com/actions/runner/issues/743#issuecomment-704971081
+if [[ -e "$rootfolder/.service" && "$(uname)" == "Darwin" ]]
+then
+    "$rootfolder/svc.sh" uninstall
+    "$rootfolder/svc.sh" install
+    "$rootfolder/svc.sh" start
+fi
 
 # restart interactive runner if needed
 if [ $restartinteractiverunner -ne 0 ]
