@@ -41,8 +41,6 @@ namespace GitHub.Runner.Common
         public static string PluginTracePrefix = "##[plugin.trace]";
         public static readonly int RunnerDownloadRetryMaxAttempts = 3;
 
-        public static readonly int CompositeActionsMaxDepth = 9;
-
         // This enum is embedded within the Constants class to make it easier to reference and avoid
         // ambiguous type reference with System.Runtime.InteropServices.OSPlatform and System.Runtime.InteropServices.Architecture
         public enum OSPlatform
@@ -50,6 +48,17 @@ namespace GitHub.Runner.Common
             OSX,
             Linux,
             Windows
+        }
+
+        public static System.Runtime.InteropServices.OSPlatform ToInteropPlatform(this OSPlatform platform)
+        {
+            return platform switch
+            {
+                OSPlatform.Linux => System.Runtime.InteropServices.OSPlatform.Linux,
+                OSPlatform.OSX => System.Runtime.InteropServices.OSPlatform.OSX,
+                OSPlatform.Windows => System.Runtime.InteropServices.OSPlatform.Windows,
+                _ => System.Runtime.InteropServices.OSPlatform.FreeBSD // not supported
+            };
         }
 
         public enum Architecture
