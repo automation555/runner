@@ -21,6 +21,7 @@ namespace GitHub.Runner.Common.Tests
                 "linux-arm",
                 "linux-arm64",
                 "osx-x64"
+                    //comment added
             };
 
             Assert.True(BuildConstants.Source.CommitHash.Length == 40, $"CommitHash should be SHA-1 hash {BuildConstants.Source.CommitHash}");
